@@ -37,11 +37,11 @@ $$x(t) = w(t - \tau_e) \exp\left(j \Omega_c (t - \tau_c)\right)$$
 
 ### 對比彙總表
 
-| 延遲模式 | 時域物理形式 $x(t)$ | 傅立葉轉換 $X(f)$ | 振幅譜 $|X(f)|$ | 解纏繞相位譜 $\Phi(f)$ | 幾何特徵與過零點 | 群延遲 $\tau_g(f)$ |
+| 延遲模式 | 時域形式 <i>x</i>(<i>t</i>) | 傅立葉轉換 <i>X</i>(<i>f</i>) | 振幅譜 &#124;<i>X</i>(<i>f</i>)&#124; | 解纏繞相位譜 &Phi;(<i>f</i>) | 幾何特徵與過零點 | 群延遲 &tau;<sub><i>g</i></sub> |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. 純包絡延遲**<br>($\tau_e = \tau, \tau_c = 0$) | $w(t - \tau)e^{j\Omega_c t}$ | $W(f - f_c) e^{-j 2\pi (f - f_c) \tau}$ | $|W(f - f_c)|$（不變） | $-2\pi(f - f_c)\tau$ | 通過點 $(f_c, 0)$，在 $f_c$ 處相位恆為 0 | $\tau_g = \tau$ |
-| **2. 純載波延遲**<br>($\tau_e = 0, \tau_c = \tau$) | $w(t)e^{j\Omega_c(t - \tau)}$ | $W(f - f_c) e^{-j 2\pi f_c \tau}$ | $|W(f - f_c)|$（不變） | $-2\pi f_c \tau = -\Omega_c \tau$ | **水平直線**（斜率為 0，純相移） | $\tau_g = 0$ |
-| **3. True Time Delay**<br>($\tau_e = \tau, \tau_c = \tau$) | $w(t - \tau)e^{j\Omega_c(t - \tau)}$ | $W(f - f_c) e^{-j 2\pi f \tau}$ | $|W(f - f_c)|$（不變） | $-2\pi f \tau$ | 通過原點 $(0, 0)$，斜率為 $-2\pi\tau$ | $\tau_g = \tau$ |
+| **1. 純包絡延遲**<br>(&tau;<sub><i>e</i></sub> = &tau;, &tau;<sub><i>c</i></sub> = 0) | <i>w</i>(<i>t</i> &minus; &tau;)<i>e</i><sup><i>j</i>&Omega;<sub><i>c</i></sub><i>t</i></sup> | <i>W</i>(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>) <i>e</i><sup>&minus;<i>j</i>2&pi;(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>)&tau;</sup> | &#124;<i>W</i>(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>)&#124;<br>(完全不變) | &minus;2&pi;(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>)&tau; | 通過點 (<i>f</i><sub><i>c</i></sub>, 0)，在 <i>f</i><sub><i>c</i></sub> 處相位恆為 0 | &tau; |
+| **2. 純載波延遲**<br>(&tau;<sub><i>e</i></sub> = 0, &tau;<sub><i>c</i></sub> = &tau;) | <i>w</i>(<i>t</i>)<i>e</i><sup><i>j</i>&Omega;<sub><i>c</i></sub>(<i>t</i> &minus; &tau;)</sup> | <i>W</i>(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>) <i>e</i><sup>&minus;<i>j</i>2&pi;<i>f</i><sub><i>c</i></sub>&tau;</sup> | &#124;<i>W</i>(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>)&#124;<br>(完全不變) | &minus;2&pi;<i>f</i><sub><i>c</i></sub>&tau; = &minus;&Omega;<sub><i>c</i></sub>&tau; | **水平直線**（斜率為 0，純相移） | 0 |
+| **3. True Time Delay**<br>(&tau;<sub><i>e</i></sub> = &tau;, &tau;<sub><i>c</i></sub> = &tau;) | <i>w</i>(<i>t</i> &minus; &tau;)<i>e</i><sup><i>j</i>&Omega;<sub><i>c</i></sub>(<i>t</i> &minus; &tau;)</sup> | <i>W</i>(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>) <i>e</i><sup>&minus;<i>j</i>2&pi;<i>f</i>&tau;</sup> | &#124;<i>W</i>(<i>f</i> &minus; <i>f</i><sub><i>c</i></sub>)&#124;<br>(完全不變) | &minus;2&pi;<i>f</i>&tau; | 通過原點 (0, 0)，斜率為 &minus;2&pi;&tau; | &tau; |
 
 ---
 

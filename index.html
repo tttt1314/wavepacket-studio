@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>延遲波包互動實驗室 | Wavepacket Studio</title>
+  <style>
+    :root {
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --accent: #d97706;
+      --magenta: #c026d3;
+      --green: #16a34a;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* 控制面板 */
+    .controls-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .control-val {
+      font-family: monospace;
+      color: var(--primary);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #e2e8f0;
+    }
+
+    button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #15803d;
+      cursor: pointer;
+    }
+
+    .badge-uncertainty {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 4 分割圖表畫布網格 */
+    .plots-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .plots-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .plot-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px 16px 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    .plot-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plot-tag {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    canvas {
+      width: 100%;
+      height: 270px;
+      display: block;
+      background: #ffffff;
+      border: 1px solid #f1f5f9;
+      border-radius: 6px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌊 延遲波包（Delayed Wavepacket at &Omega;<sub>c</sub>）互動實驗室</h1>
+      <p class="subtitle">即時調節載波頻率、包絡寬度、延遲機制，動態驗證海森堡測不準原理與頻域相位演變</p>
+    </header>
+
+    <!-- 參數調節區 -->
+    <div class="controls-panel">
+      <div class="controls-grid">
+        <!-- 載波頻率 -->
+        <div class="control-group">
+          <div class="control-header">
+            <span>載波頻率 f<sub>c</sub> (&Omega;<sub>c</sub> / 2&pi;)</span>
+            <span class="control-val" id="val-fc">60.0 Hz</span>
+          </div>
+          <input type="range" id="slider-fc" min="20" max="180" step="1" value="60">
+        </div>
+
+        <!-- 包絡寬度 -->
+        <div class="control-group">
+          <div class="control-header">
+            <span>包絡寬度 &sigma;<sub>t</sub> (Wideness)</span>
+            <span class="control-val" id="val-sigma" style="color: var(--magenta);">0.050 s</span>
+          </div>
+          <input type="range" id="slider-sigma" min="0.015" max="0.120" step="0.005" value="0.050">
+        </div>
+
+        <!-- 包絡延遲 -->
+        <div class="control-group">
+          <div class="control-header">
+            <span>包絡延遲 &tau;<sub>e</sub> (Envelope Delay)</span>
+            <span class="control-val" id="val-taue">0.30 s</span>
+          </div>
+          <input type="range" id="slider-taue" min="0.0" max="1.0" step="0.02" value="0.30">
+        </div>
+
+        <!-- 載波延遲 -->
+        <div class="control-group">
+          <div class="control-header">
+            <span>載波延遲 &tau;<sub>c</sub> (Carrier Delay)</span>
+            <span class="control-val" id="val-tauc">0.00 s</span>
+          </div>
+          <input type="range" id="slider-tauc" min="0.0" max="1.0" step="0.02" value="0.00">
+        </div>
+      </div>
+
+      <!-- 下方快捷按鈕與徽章 -->
+      <div class="toolbar-row">
+        <div class="btn-group">
+          <span style="font-size:0.85rem; font-weight:600; align-self:center; color:var(--text-muted);">快速切換模式：</span>
+          <button id="btn-env-only" class="active">1. 純包絡延遲</button>
+          <button id="btn-car-only">2. 純載波延遲</button>
+          <button id="btn-ttd">3. True Time Delay</button>
+          <button id="btn-reset">重置預設</button>
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="chk-lock-ttd">
+          鎖定為 True Time Delay (&tau;<sub>c</sub> = &tau;<sub>e</sub>)
+        </label>
+
+        <div class="badge-uncertainty" id="badge-uncertainty">
+          <span>&Delta;t &middot; &Delta;f 測不準乘積:</span>
+          <span id="txt-uncertainty">&sigma;<sub>t</sub> &middot; &sigma;<sub>f</sub> = 0.1592 &approx; 1/(2&pi;)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 大子圖 -->
+    <div class="plots-grid">
+      <!-- 圖 1: 時域訊號 -->
+      <div class="plot-card">
+        <div class="plot-title">
+          <span>1. 時域訊號波形與包絡</span>
+          <span class="plot-tag" style="background:#eff6ff; color:#2563eb;">時域 &sigma;<sub>t</sub> 標尺</span>
+        </div>
+        <canvas id="canvas-time"></canvas>
+      </div>
+
+      <!-- 圖 2: 頻譜振幅 -->
+      <div class="plot-card">
+        <div class="plot-title">
+          <span>2. 傅立葉振幅譜 |X(f)|</span>
+          <span class="plot-tag" style="background:#f0fdf4; color:#16a34a;">頻寬 &sigma;<sub>f</sub> = 1/(2&pi;&sigma;<sub>t</sub>)</span>
+        </div>
+        <canvas id="canvas-mag"></canvas>
+      </div>
+
+      <!-- 圖 3: 包覆相位 -->
+      <div class="plot-card">
+        <div class="plot-title">
+          <span>3. 包覆相位譜 [&minus;&pi;, &pi;]</span>
+          <span class="plot-tag" style="background:#fefce8; color:#ca8a04;" id="tag-fringe">&Delta;f<sub>fringe</sub> = 1/&tau;<sub>e</sub></span>
+        </div>
+        <canvas id="canvas-wrapped"></canvas>
+      </div>
+
+      <!-- 圖 4: 解纏繞相位 -->
+      <div class="plot-card">
+        <div class="plot-title">
+          <span>4. 解纏繞相位與線性斜率</span>
+          <span class="plot-tag" style="background:#faf5ff; color:#9333ea;" id="tag-slope">斜率 = &minus;2&pi;&tau;<sub>e</sub></span>
+        </div>
+        <canvas id="canvas-unwrapped"></canvas>
+      </div>
+    </div>
+
+    <footer>
+      <p>由 Google Antigravity &amp; MATLAB MCP 打造 | 支援直接雙擊離線開啟或部署至 GitHub Pages 零相依分享</p>
+    </footer>
+  </div>
+
+  <script>
+    // 參數與取樣設置
+    const FS = 1000;       // 取樣率 1000 Hz (足以涵蓋 250 Hz 頻寬)
+    const T = 2.0;         // 2 秒
+    const N = Math.round(FS * T); // 2000 點
+    const NFFT = 8192;     // 8192 點高解析度 FFT，徹底消除頻域相位混疊 (Delta phi << pi)
+    const T0 = 0.4;        // 基準中心時間
+
+    // DOM 元素
+    const sldFc = document.getElementById('slider-fc');
+    const sldSigma = document.getElementById('slider-sigma');
+    const sldTauE = document.getElementById('slider-taue');
+    const sldTauC = document.getElementById('slider-tauc');
+    const chkLockTTD = document.getElementById('chk-lock-ttd');
+
+    const lblFc = document.getElementById('val-fc');
+    const lblSigma = document.getElementById('val-sigma');
+    const lblTauE = document.getElementById('val-taue');
+    const lblTauC = document.getElementById('val-tauc');
+    const txtUncertainty = document.getElementById('txt-uncertainty');
+    const tagFringe = document.getElementById('tag-fringe');
+    const tagSlope = document.getElementById('tag-slope');
+
+    const btnEnvOnly = document.getElementById('btn-env-only');
+    const btnCarOnly = document.getElementById('btn-car-only');
+    const btnTTD = document.getElementById('btn-ttd');
+    const btnReset = document.getElementById('btn-reset');
+
+    const cvsTime = document.getElementById('canvas-time');
+    const cvsMag = document.getElementById('canvas-mag');
+    const cvsWrapped = document.getElementById('canvas-wrapped');
+    const cvsUnwrapped = document.getElementById('canvas-unwrapped');
+
+    // Cooley-Tukey Radix-2 FFT 演算法
+    function fftRadix2(re, im) {
+      const n = re.length;
+      for (let i = 1, j = 0; i < n; i++) {
+        let bit = n >> 1;
+        for (; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if (i < j) {
+          let tr = re[i]; re[i] = re[j]; re[j] = tr;
+          let ti = im[i]; im[i] = im[j]; im[j] = ti;
+        }
+      }
+      for (let len = 2; len <= n; len <<= 1) {
+        let half = len >> 1;
+        let ang = -2 * Math.PI / len;
+        let wstep_r = Math.cos(ang), wstep_i = Math.sin(ang);
+        for (let i = 0; i < n; i += len) {
+          let wr = 1, wi = 0;
+          for (let j = 0; j < half; j++) {
+            let u_r = re[i + j], u_i = im[i + j];
+            let v_r = re[i + j + half] * wr - im[i + j + half] * wi;
+            let v_i = re[i + j + half] * wi + im[i + j + half] * wr;
+            re[i + j] = u_r + v_r;
+            im[i + j] = u_i + v_i;
+            re[i + j + half] = u_r - v_r;
+            im[i + j + half] = u_i - v_i;
+            let next_wr = wr * wstep_r - wi * wstep_i;
+            wi = wr * wstep_i + wi * wstep_r;
+            wr = next_wr;
+          }
+        }
+      }
+    }
+
+    // 相位解纏繞 (Unwrap)
+    function unwrapPhases(phases) {
+      const out = new Float64Array(phases.length);
+      let offset = 0;
+      out[0] = phases[0];
+      for (let i = 1; i < phases.length; i++) {
+        let diff = phases[i] - phases[i - 1];
+        if (diff > Math.PI) offset -= 2 * Math.PI;
+        else if (diff < -Math.PI) offset += 2 * Math.PI;
+        out[i] = phases[i] + offset;
+      }
+      return out;
+    }
+
+    // 核心繪圖函數
+    function render() {
+      const fc = parseFloat(sldFc.value);
+      const sigma_t = parseFloat(sldSigma.value);
+      const tau_e = parseFloat(sldTauE.value);
+      let tau_c = parseFloat(sldTauC.value);
+
+      if (chkLockTTD.checked) {
+        tau_c = tau_e;
+        sldTauC.value = tau_c;
+        sldTauC.disabled = true;
+      } else {
+        sldTauC.disabled = false;
+      }
+
+      const tc = T0 + tau_e; // 包絡中心真實到達時間
+
+      // 更新文字
+      lblFc.textContent = fc.toFixed(1) + ' Hz';
+      lblSigma.textContent = sigma_t.toFixed(3) + ' s';
+      lblTauE.textContent = tau_e.toFixed(2) + ' s';
+      lblTauC.textContent = tau_c.toFixed(2) + ' s';
+
+      const sigma_f = 1 / (2 * Math.PI * sigma_t);
+      const product = (sigma_t * sigma_f).toFixed(4);
+      txtUncertainty.innerHTML = `&sigma;<sub>t</sub> &middot; &sigma;<sub>f</sub> = ${product} &approx; 1/(2&pi;)`;
+
+      if (tc > 0.05) {
+        tagFringe.textContent = `條紋間距 Δf = ${(1 / tc).toFixed(2)} Hz`;
+      } else {
+        tagFringe.textContent = `無鋸齒 (tc ≈ 0)`;
+      }
+      tagSlope.textContent = `絕對斜率: ${(-2 * Math.PI * tc).toFixed(1)} rad/Hz`;
+
+      // 生成時域訊號
+      const tVec = new Float64Array(N);
+      const xReal = new Float64Array(N);
+      const envVec = new Float64Array(N);
+      const fftRe = new Float64Array(NFFT);
+      const fftIm = new Float64Array(NFFT);
+
+      const Omega = 2 * Math.PI * fc;
+
+      for (let i = 0; i < N; i++) {
+        const t = i / FS;
+        tVec[i] = t;
+        const env = Math.exp(-Math.pow(t - tc, 2) / (2 * Math.pow(sigma_t, 2)));
+        envVec[i] = env;
+        const phase = Omega * (t - tau_c);
+        xReal[i] = env * Math.cos(phase);
+        fftRe[i] = env * Math.cos(phase);
+        fftIm[i] = env * Math.sin(phase);
+      }
+
+      // 執行 FFT
+      fftRadix2(fftRe, fftIm);
+
+      // 計算頻譜 (取 0 ~ 250 Hz 範圍)
+      const maxPlotFreq = 250;
+      const numBins = Math.floor((maxPlotFreq / FS) * NFFT);
+      const freqs = new Float64Array(numBins);
+      const mags = new Float64Array(numBins);
+      const phases = new Float64Array(numBins);
+
+      let maxMag = 0;
+      for (let i = 0; i < numBins; i++) {
+        freqs[i] = (i * FS) / NFFT;
+        const re = fftRe[i] / N;
+        const im = fftIm[i] / N;
+        const m = Math.sqrt(re * re + im * im);
+        mags[i] = m;
+        if (m > maxMag) maxMag = m;
+        phases[i] = Math.atan2(im, re);
+      }
+
+      // 相位分析：嚴格鎖定在訊號有效通帶 [fc - 3.2*sigma_f, fc + 3.2*sigma_f]
+      // 避免在振幅為 0 的死區計算噪聲相位！
+      const passHalfWidth = Math.max(12, 3.2 * sigma_f);
+      const fMin = Math.max(0, fc - passHalfWidth);
+      const fMax = Math.min(maxPlotFreq, fc + passHalfWidth);
+      
+      const subFreqs = [];
+      const subPhases = [];
+      for (let i = 0; i < numBins; i++) {
+        if (freqs[i] >= fMin && freqs[i] <= fMax) {
+          subFreqs.push(freqs[i]);
+          subPhases.push(phases[i]);
+        }
+      }
+      const unwrapped = unwrapPhases(subPhases);
+
+      // --- 繪製畫布 ---
+      drawTimePlot(cvsTime, tVec, xReal, envVec, tc, sigma_t);
+      drawMagPlot(cvsMag, freqs, mags, maxMag, fc, sigma_f);
+      drawWrappedPlot(cvsWrapped, subFreqs, subPhases, fc);
+      drawUnwrappedPlot(cvsUnwrapped, subFreqs, unwrapped, fc, tc, tau_c);
+    }
+
+    // 輔助座標轉換
+    function setupCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      return { ctx, w: rect.width, h: rect.height };
+    }
+
+    // 1. 繪製時域訊號
+    function drawTimePlot(cvs, t, x, env, tc, sigma) {
+      const { ctx, w, h } = setupCanvas(cvs);
+      const pad = { left: 45, right: 20, top: 30, bottom: 35 };
+      const pw = w - pad.left - pad.right;
+      const ph = h - pad.top - pad.bottom;
+
+      const toX = val => pad.left + (val / T) * pw;
+      const toY = val => pad.top + ph / 2 - (val / 1.25) * (ph / 2);
+
+      // 網格與軸
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let tTick = 0; tTick <= 2.0; tTick += 0.5) {
+        ctx.beginPath();
+        ctx.moveTo(toX(tTick), pad.top);
+        ctx.lineTo(toX(tTick), pad.top + ph);
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(tTick.toFixed(1) + 's', toX(tTick), pad.top + ph + 18);
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(pad.left, toY(0));
+      ctx.lineTo(pad.left + pw, toY(0));
+      ctx.stroke();
+
+      // 畫中心時間垂直虛線
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#64748b';
+      ctx.beginPath();
+      ctx.moveTo(toX(tc), pad.top);
+      ctx.lineTo(toX(tc), pad.top + ph);
+      ctx.stroke();
+      ctx.restore();
+
+      // 畫包絡 ±w(t)
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      for (let i = 0; i < t.length; i += 4) {
+        const px = toX(t[i]), py = toY(env[i]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < t.length; i += 4) {
+        const px = toX(t[i]), py = toY(-env[i]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // 畫實數震盪波形
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      for (let i = 0; i < t.length; i += 2) {
+        const px = toX(t[i]), py = toY(x[i]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // 標示時域寬度 2*sigma (洋紅色雙向標尺)
+      const ySig = toY(Math.exp(-0.5));
+      const xLeft = toX(tc - sigma);
+      const xRight = toX(tc + sigma);
+
+      ctx.strokeStyle = '#c026d3';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(xLeft, ySig); ctx.lineTo(xRight, ySig);
+      ctx.moveTo(xLeft, ySig - 6); ctx.lineTo(xLeft, ySig + 6);
+      ctx.moveTo(xRight, ySig - 6); ctx.lineTo(xRight, ySig + 6);
+      ctx.stroke();
+
+      ctx.fillStyle = '#c026d3';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`2σ_t = ${(2 * sigma).toFixed(3)}s`, toX(tc), ySig - 9);
+      ctx.fillText(`tc = ${tc.toFixed(2)}s`, toX(tc), pad.top + ph - 8);
+    }
+
+    // 2. 繪製頻譜振幅
+    function drawMagPlot(cvs, freqs, mags, maxMag, fc, sigma_f) {
+      const { ctx, w, h } = setupCanvas(cvs);
+      const pad = { left: 45, right: 20, top: 30, bottom: 35 };
+      const pw = w - pad.left - pad.right;
+      const ph = h - pad.top - pad.bottom;
+
+      const fMax = 250;
+      const toX = val => pad.left + (val / fMax) * pw;
+      const toY = val => pad.top + ph - (val / (maxMag * 1.25 || 1)) * ph;
+
+      // 網格與軸
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let fTick = 0; fTick <= 250; fTick += 50) {
+        ctx.beginPath();
+        ctx.moveTo(toX(fTick), pad.top);
+        ctx.lineTo(toX(fTick), pad.top + ph);
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(fTick + 'Hz', toX(fTick), pad.top + ph + 18);
+      }
+
+      // 中心頻率 fc 虛線
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#15803d';
+      ctx.beginPath();
+      ctx.moveTo(toX(fc), pad.top);
+      ctx.lineTo(toX(fc), pad.top + ph);
+      ctx.stroke();
+      ctx.restore();
+
+      // 振幅曲線
+      ctx.strokeStyle = '#16a34a';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let i = 0; i < freqs.length; i++) {
+        const px = toX(freqs[i]), py = toY(mags[i]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // 頻寬標尺 2*sigma_f (洋紅色)
+      const hSig = toY(maxMag * Math.exp(-0.5));
+      const xLeft = toX(Math.max(0, fc - sigma_f));
+      const xRight = toX(fc + sigma_f);
+
+      ctx.strokeStyle = '#c026d3';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(xLeft, hSig); ctx.lineTo(xRight, hSig);
+      ctx.moveTo(xLeft, hSig - 6); ctx.lineTo(xLeft, hSig + 6);
+      ctx.moveTo(xRight, hSig - 6); ctx.lineTo(xRight, hSig + 6);
+      ctx.stroke();
+
+      ctx.fillStyle = '#c026d3';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`頻寬 2σ_f = ${(2 * sigma_f).toFixed(1)} Hz`, toX(fc), hSig - 9);
+
+      ctx.fillStyle = '#15803d';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(`fc = ${fc.toFixed(1)} Hz`, toX(fc), pad.top + 16);
+    }
+
+    // 3. 繪製包覆相位
+    function drawWrappedPlot(cvs, freqs, phases, fc) {
+      const { ctx, w, h } = setupCanvas(cvs);
+      const pad = { left: 45, right: 20, top: 30, bottom: 35 };
+      const pw = w - pad.left - pad.right;
+      const ph = h - pad.top - pad.bottom;
+
+      const fStart = freqs[0], fEnd = freqs[freqs.length - 1];
+      const toX = val => pad.left + ((val - fStart) / (fEnd - fStart || 1)) * pw;
+      const toY = val => pad.top + ph / 2 - (val / Math.PI) * (ph / 2);
+
+      // ±pi 橫線
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      [-Math.PI, 0, Math.PI].forEach((pVal, idx) => {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, toY(pVal));
+        ctx.lineTo(pad.left + pw, toY(pVal));
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'right';
+        const txt = idx === 0 ? '-π' : idx === 1 ? '0' : '+π';
+        ctx.fillText(txt, pad.left - 8, toY(pVal) + 4);
+      });
+
+      // 畫相位曲線
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i < freqs.length; i++) {
+        const px = toX(freqs[i]), py = toY(phases[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else {
+          // 遇到跳變不斷線避免混亂
+          if (Math.abs(phases[i] - phases[i - 1]) > Math.PI) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+      }
+      ctx.stroke();
+
+      // X 軸標籤
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'center';
+      ctx.fillText(fStart.toFixed(0) + ' Hz', pad.left, pad.top + ph + 18);
+      ctx.fillText(fc.toFixed(0) + ' Hz (fc)', toX(fc), pad.top + ph + 18);
+      ctx.fillText(fEnd.toFixed(0) + ' Hz', pad.left + pw, pad.top + ph + 18);
+    }
+
+    // 4. 繪製解纏繞相位
+    function drawUnwrappedPlot(cvs, freqs, unwrapped, fc, tc, tau_c) {
+      const { ctx, w, h } = setupCanvas(cvs);
+      const pad = { left: 55, right: 20, top: 30, bottom: 35 };
+      const pw = w - pad.left - pad.right;
+      const ph = h - pad.top - pad.bottom;
+
+      const fStart = freqs[0], fEnd = freqs[freqs.length - 1];
+      const toX = val => pad.left + ((val - fStart) / (fEnd - fStart || 1)) * pw;
+
+      let minP = Math.min(...unwrapped);
+      let maxP = Math.max(...unwrapped);
+      if (Math.abs(maxP - minP) < 2) {
+        minP -= 2; maxP += 2;
+      }
+      const toY = val => pad.top + ph - ((val - minP) / (maxP - minP)) * ph;
+
+      // 網格與基準
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const yVal = minP + (i / 4) * (maxP - minP);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, toY(yVal));
+        ctx.lineTo(pad.left + pw, toY(yVal));
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(yVal.toFixed(1), pad.left - 6, toY(yVal) + 3);
+      }
+
+      // 繪製解纏繞相位
+      ctx.strokeStyle = '#9333ea';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for (let i = 0; i < freqs.length; i++) {
+        const px = toX(freqs[i]), py = toY(unwrapped[i]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // 理論直線 (虛線)
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      const midIdx = Math.floor(freqs.length / 2);
+      const refPhase = unwrapped[midIdx];
+      const refFreq = freqs[midIdx];
+      const slope = -2 * Math.PI * tc;
+      for (let i = 0; i < freqs.length; i++) {
+        const theoryVal = refPhase + slope * (freqs[i] - refFreq);
+        const px = toX(freqs[i]), py = toY(theoryVal);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // 圖例
+      ctx.fillStyle = '#9333ea';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('— 實測相位', pad.left + 10, pad.top + 16);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillText('-- 理論直線 (-2π·tc)', pad.left + 90, pad.top + 16);
+
+      // X 軸
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'center';
+      ctx.fillText(fStart.toFixed(0) + ' Hz', pad.left, pad.top + ph + 18);
+      ctx.fillText(fc.toFixed(0) + ' Hz (fc)', toX(fc), pad.top + ph + 18);
+      ctx.fillText(fEnd.toFixed(0) + ' Hz', pad.left + pw, pad.top + ph + 18);
+    }
+
+    // 事件監聽
+    [sldFc, sldSigma, sldTauE, sldTauC].forEach(el => el.addEventListener('input', render));
+    chkLockTTD.addEventListener('change', render);
+
+    // 快捷按鈕
+    function clearActiveButtons() {
+      [btnEnvOnly, btnCarOnly, btnTTD].forEach(b => b.classList.remove('active'));
+    }
+
+    btnEnvOnly.addEventListener('click', () => {
+      clearActiveButtons();
+      btnEnvOnly.classList.add('active');
+      chkLockTTD.checked = false;
+      sldTauE.value = 0.40;
+      sldTauC.value = 0.00;
+      render();
+    });
+
+    btnCarOnly.addEventListener('click', () => {
+      clearActiveButtons();
+      btnCarOnly.classList.add('active');
+      chkLockTTD.checked = false;
+      sldTauE.value = 0.00;
+      sldTauC.value = 0.40;
+      render();
+    });
+
+    btnTTD.addEventListener('click', () => {
+      clearActiveButtons();
+      btnTTD.classList.add('active');
+      chkLockTTD.checked = true;
+      sldTauE.value = 0.40;
+      sldTauC.value = 0.40;
+      render();
+    });
+
+    btnReset.addEventListener('click', () => {
+      clearActiveButtons();
+      btnEnvOnly.classList.add('active');
+      sldFc.value = 60;
+      sldSigma.value = 0.050;
+      sldTauE.value = 0.30;
+      sldTauC.value = 0.00;
+      chkLockTTD.checked = false;
+      render();
+    });
+
+    window.addEventListener('resize', render);
+
+    // 首次執行渲染
+    render();
+  </script>
+</body>
+</html>
